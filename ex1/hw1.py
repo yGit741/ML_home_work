@@ -1,6 +1,6 @@
 ###### Your ID ######
 # ID1: 204266191
-# ID2: complete
+# ID2: alian id
 #####################
 
 # imports 
@@ -22,7 +22,8 @@ def preprocess(X,y):
     ###########################################################################
     # TODO: Implement the normalization function.                             #
     ###########################################################################
-    pass
+    X = (X - np.mean(X))/(max(X) - min(X))
+    y = (y - np.mean(y))/(max(y) - min(y))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -42,7 +43,11 @@ def apply_bias_trick(X):
     ###########################################################################
     # TODO: Implement the bias trick by adding a column of ones to the data.                             #
     ###########################################################################
-    pass
+    X = np.transpose(
+                    np.array(
+                            (np.ones(X.shape[0]),X)
+                            )
+                    )
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -66,11 +71,24 @@ def compute_cost(X, y, theta):
     ###########################################################################
     # TODO: Implement the MSE cost function.                                  #
     ###########################################################################
-    pass
+    theta_0 = theta[0]
+    theta_1 = theta[1]
+    J = ((theta_0 + theta_1 * X - y) ** 2).mean(axis=0) / 2
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return J
+
+
+def mse_partial_derivative_vectorized(theta, j, X, y):
+    # This function takes vector of parameters (theta), index of parameter (j), train data (X)
+    # and real value (y) and return the partial derivative of MSE by the j parameter of theta
+
+    # number of instances
+    raise Exception
+    m = X.shape[0]
+    # Using the formula learned in calss for the partial derivative of the cost function
+    return (1 / m) * ((np.inner(theta, X) - y) * X[j])
 
 def gradient_descent(X, y, theta, alpha, num_iters):
     """
@@ -98,8 +116,27 @@ def gradient_descent(X, y, theta, alpha, num_iters):
     ###########################################################################
     # TODO: Implement the gradient descent optimization algorithm.            #
     ###########################################################################
-    pass
-    ###########################################################################
+    # Initialize two copies of theta
+    current_theta = theta
+    temp_theta = theta
+
+    # Iterate "iterations" times
+    for t in range(0, num_iters):
+
+        # Apply the gradient descent algorithm for each parameter in theta seperately
+        for theta_i in enumerate(temp_theta, start=0):
+            j = theta_i[0]
+
+            # we update the temp theta by the current theta in order to keep each partial derivative independent
+            # of the other partial derivatives in the same stage
+            descent = alpha * mse_partial_derivative_vectorized(current_theta, j, X, y)
+            print(descent)
+
+            temp_theta[j] = temp_theta[j] - descent
+
+            # Update the current theta after fullfil the t + 1 iteration
+        current_theta = temp_theta
+        ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return theta, J_history
@@ -126,6 +163,7 @@ def compute_pinv(X, y):
     # TODO: Implement the pseudoinverse algorithm.                            #
     ###########################################################################
     pass
+    raise Exception
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -155,6 +193,7 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
     ###########################################################################
     # TODO: Implement the efficient gradient descent optimization algorithm.  #
     ###########################################################################
+    raise Exception
     pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -182,6 +221,7 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     ###########################################################################
     # TODO: Implement the function and find the best alpha value.             #
     ###########################################################################
+    raise Exception
     pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -210,6 +250,7 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     #####c######################################################################
     # TODO: Implement the function and find the best alpha value.             #
     ###########################################################################
+    raise Exception
     pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -232,6 +273,7 @@ def create_square_features(df):
     ###########################################################################
     # TODO: Implement the function to add polynomial features                 #
     ###########################################################################
+    raise Exception
     pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
