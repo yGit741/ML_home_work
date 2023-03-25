@@ -56,7 +56,7 @@ def apply_bias_trick(X):
 def compute_cost(X, y, theta):
     """
     Computes the average squared difference between an observation's actual and
-    predicted values for linear regression.  
+    predicted values for linear regression.
 
     Input:
     - X: Input data (m instances over n features).
@@ -66,29 +66,28 @@ def compute_cost(X, y, theta):
     Returns:
     - J: the cost associated with the current set of parameters (single number).
     """
-    
+
     J = 0  # We use J for the cost.
     ###########################################################################
     # TODO: Implement the MSE cost function.                                  #
     ###########################################################################
-    theta_0 = theta[0]
-    theta_1 = theta[1]
-    J = ((theta_0 + theta_1 * X - y) ** 2).mean(axis=0) / 2
+    J = ((X @ theta - y) ** 2).mean(axis=0) / 2
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return J
 
-
-def mse_partial_derivative_vectorized(theta, j, X, y):
+#################### Auxilary function ####################
+def _mse_partial_derivative_vectorized(theta, j, X, y):
     # This function takes vector of parameters (theta), index of parameter (j), train data (X)
     # and real value (y) and return the partial derivative of MSE by the j parameter of theta
 
     # number of instances
-    raise Exception
     m = X.shape[0]
+
     # Using the formula learned in calss for the partial derivative of the cost function
-    return (1 / m) * ((np.inner(theta, X) - y) * X[j])
+    return ((X @ theta - y) * X[:,j]).sum()/m
+###########################################################
 
 def gradient_descent(X, y, theta, alpha, num_iters):
     """
@@ -116,26 +115,35 @@ def gradient_descent(X, y, theta, alpha, num_iters):
     ###########################################################################
     # TODO: Implement the gradient descent optimization algorithm.            #
     ###########################################################################
-    # Initialize two copies of theta
+    # Initialize a temporary copy of theta
     current_theta = theta
-    temp_theta = theta
 
     # Iterate "iterations" times
     for t in range(0, num_iters):
 
-        # Apply the gradient descent algorithm for each parameter in theta seperately
-        for theta_i in enumerate(temp_theta, start=0):
+        # initialize a variable to keep the cost due to each theta
+        theta_errors = np.zeros(theta.shape[0])
+
+        # Apply the gradient descent algorithm for each parameter in theta separately
+        for theta_i in enumerate(current_theta, start=0):
+
+            # unpack the enumerate object to find the index of the current theta we derivate by
             j = theta_i[0]
 
-            # we update the temp theta by the current theta in order to keep each partial derivative independent
-            # of the other partial derivatives in the same stage
-            descent = alpha * mse_partial_derivative_vectorized(current_theta, j, X, y)
-            print(descent)
+            # compute the descent with an auxiliary function
+            descent = _mse_partial_derivative_vectorized(theta, j, X, y)
 
-            temp_theta[j] = temp_theta[j] - descent
+            # keep the mse of theta j in order to compute J_history later
+            theta_errors[j] = descent
 
-            # Update the current theta after fullfil the t + 1 iteration
-        current_theta = temp_theta
+            # update the value of the current theta by the descent we got modified by learning rate
+            current_theta[j] = current_theta[j] - alpha * descent
+
+        # update J_history with the current total descent
+        J_history.append(theta_errors.sum())
+
+        # update theta with the new value afte iteration "theta_i"
+        theta = current_theta
         ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
