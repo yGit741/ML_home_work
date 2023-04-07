@@ -30,5 +30,5 @@ def test_preprocess(raw_data_fixtures):
     assert all(np.logical_and(-1 <= y, y <= 1)), "y is not between -1 to 1"
 
 
-def test_apply_bias_trick(X):
+def test_apply_bias_trick():
     pass
