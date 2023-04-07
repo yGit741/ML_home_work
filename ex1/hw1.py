@@ -43,14 +43,17 @@ def apply_bias_trick(X):
     ###########################################################################
     # TODO: Implement the bias trick by adding a column of ones to the data.                             #
     ###########################################################################
-    X = np.hstack( # add columns to the left
-                (np.ones((X.shape[0], 1)), X) # creat a columns of ones according to number of rows in X
-                 )
+    if len(X.shape) == 1: # deal with numpy tendency to make one dimensional vector a row vector by default
+        X = X.reshape(X.shape[0], 1)
 
+    X = np.hstack( ( np.ones((X.shape[0], 1)), X ) ) # add columns of ones to the left
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return X
+
+print(apply_bias_trick(np.ones(3)))
+
 
 def compute_cost(X, y, theta):
     """
@@ -70,7 +73,11 @@ def compute_cost(X, y, theta):
     ###########################################################################
     # TODO: Implement the MSE cost function.                                  #
     ###########################################################################
+    print("x: ", X)
+    print("theta: ", theta)
+    print("y: ", y)
     J = ((X @ theta - y) ** 2).mean(axis=0) / 2
+    print(J)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -139,7 +146,7 @@ def gradient_descent(X, y, theta, alpha, num_iters):
             current_theta[j] = current_theta[j] - alpha * descent
 
         # update J_history with the current total descent
-        J_history.append(theta_errors.sum())
+        J_history.append(compute_cost(X, y, theta_errors))
 
         # update theta with the new value afte iteration "theta_i"
         theta = current_theta
@@ -227,7 +234,7 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
             current_theta[j] = current_theta[j] - alpha * descent
 
         # update J_history with the current total descent
-        J_history.append(theta_errors.sum())
+        J_history.append(compute_cost(X, y, theta_errors))
 
         # update theta with the new value afte iteration "theta_i"
         theta = current_theta
@@ -296,22 +303,66 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     #####c######################################################################
     # TODO: Implement the function and find the best alpha value.             #
     ###########################################################################
-    temp_costs = np.zeros(X_train[0])
-    unselected_features = list(range(0, X_train[0]))
-    current_thetas = {} # indices
 
-    for i in range (1, 6):
-        for j in unselected_features:
-            if j not in selected_features:
-                theta = efficient_gradient_descent(X_train[list(current_thetas.keys())],
-                                                   y_train,
-                                                   np.ones(i),
-                                                   best_alpha,
-                                                   iterations)[0]
-                temp_costs[j] = compute_cost(X_val, y_val, current_thetas + [theta])
-        current_thetas[-1] =
-        selected_features.append(np.argmin(temp_costs))
-        del unselected_features[np.argmin(temp_costs)]
+    # x = selected_features.append(
+    #                         np.argmin([compute_cost(X_val, y_val,
+    #               efficient_gradient_descent(X_train[[i]],
+    #                                          y_train,
+    #                                          np.ones((X_train.shape[1], 1)),
+    #                                          best_alpha, iterations)[0]) for i in range(X_train.shape[1])[0]]
+    #
+    #                                 )
+    #                         )
+    # print(x)
+    # print(X_val.shape)
+    print("start work")
+    l = []
+    for i in range(X_train.shape[1]):
+        print("before descent")
+        decent = efficient_gradient_descent(X_train[[i]],y_train, np.ones((X_train.shape[1], 1)),best_alpha, iterations)[0]
+        print("after descent")
+        print(compute_cost(X_val, y_val, decent))
+        print("after break")
+        l.append(compute_cost(X_val, y_val, decent))
+        break
+
+    return(l)
+
+    # [compute_cost(X_val, y_val,
+    #               efficient_gradient_descent(X_train[[i]],
+    #                                          y_train,
+    #                                          np.ones((X_train.shape[1], 1)),
+    #                                          best_alpha, iterations)[0]) for i in range(X_train.shape[1])]
+
+    # temp_costs = np.zeros(X_train[0])
+    # unselected_features = list(range(0, X_train[0]))
+    # current_thetas = 5
+    #
+    # for i in range (1, 6):
+    #
+    #
+    #
+    #     [
+    #
+    #
+    #     compute_cost(X_val, y_val,
+    #                  efficient_gradient_descent(X_train[i],
+    #                                             y_train,
+    #                                             np.ones(len(selected_features)),
+    #                                             best_alpha,iterations)[0]) for i in
+    #     ]
+    #
+    #     for j in unselected_features:
+    #         if j not in selected_features:
+    #             theta = efficient_gradient_descent(X_train[list(current_thetas.keys())],
+    #                                                y_train,
+    #                                                np.ones(i),
+    #                                                best_alpha,
+    #                                                iterations)[0]
+    #             temp_costs[j] = compute_cost(X_val, y_val, current_thetas + [theta])
+    #     # current_thetas[-1] =
+    #     selected_features.append(np.argmin(temp_costs))
+    #     del unselected_features[np.argmin(temp_costs)]
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -350,3 +401,4 @@ def create_square_features(df):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return df_poly
+
