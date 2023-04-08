@@ -213,7 +213,7 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     # computing efficiently the theta vector's for each value of alpha on the train data
     thetas = [efficient_gradient_descent(X_train,
                                y_train,
-                               np.transpose(np.ones(X_train.shape[1])), # picking arbitrary ones as initial values
+                               np.transpose(np.random.rand(X_train.shape[1])), # picking arbitrary ones as initial values
                                alpha,
                                iterations)[0] for alpha in alphas]
 
@@ -276,7 +276,7 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
                 # compute the theta vector for those features
                 current_theta = efficient_gradient_descent(current_data,
                                                          y_train,
-                                                         np.ones((current_data.shape[1], 1)),
+                                                         np.random.rand(current_data.shape[1], 1),
                                                          best_alpha,
                                                          iterations)[0]
 
