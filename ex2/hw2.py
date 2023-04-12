@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # The first key is the degree of freedom 
 # The second key is the p-value cut-off
 # The values are the chi-statistic that you need to use in the pruning
-
+import pandas as pd
 chi_table = {1: {0.5 : 0.45,
              0.25 : 1.32,
              0.1 : 2.71,
@@ -62,6 +62,7 @@ chi_table = {1: {0.5 : 0.45,
               0.05 : 19.68,
               0.0001 : 100000}}
 
+
 def calc_gini(data):
     """
     Calculate gini impurity measure of a dataset.
@@ -76,11 +77,13 @@ def calc_gini(data):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+    data = pd.DataFrame(data)
+    gini = 1 - ((data.iloc[:,-1].value_counts(normalize=True))**2).sum()
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return gini
+
 
 def calc_entropy(data):
     """
@@ -96,11 +99,14 @@ def calc_entropy(data):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+    data = pd.DataFrame(data)
+    p_i = data.iloc[:,-1].value_counts(normalize=True)
+    entropy = - (p_i * np.log2(p_i)).sum()
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return entropy
+
 
 def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     """
@@ -120,13 +126,34 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     goodness = 0
     groups = {} # groups[feature_value] = data_subset
     ###########################################################################
-    # TODO: Implement the function.                                           #
+
+    # check that the input is consistent with the instructions in the questions
+    assert not (impurity_func == calc_gini and gain_ratio), "Can not calculate gain ratio with gini measure"
+
+    # extract the unique values of the desired feature to split into groups
+    feature_values = np.unique(data[:,0])
+
+    # splitting the data into smaller data sets based on the feature with dictionary comprehension
+    groups = {feature_char: data[data[:,feature] == feature_char] for feature_char in feature_values }
+
+    # calculate the desired impurity for each group by the chosen impurity function
+    impurity_values = [impurity_func(group) for group in groups.values()]
+
+    # implement the desired goodness_of_split according to gain_ratio boolean
+    if gain_ratio:
+        split_info = np.sum([impurity_func(data_set) for data_set in groups.values()])
+        gain = impurity_func(data) - split_info
+        goodness = gain / split_info
+    else:
+        goodness = sum([-impurity_measure for impurity_measure in impurity_values])
+
     ###########################################################################
     pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return goodness, groups
+
 
 class DecisionNode:
 
@@ -189,6 +216,7 @@ class DecisionNode:
         #                             END OF YOUR CODE                            #
         ###########################################################################
 
+
 def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
     """
     Build a tree using the given impurity measure and training dataset. 
@@ -213,6 +241,7 @@ def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
     ###########################################################################
     return root
 
+
 def predict(root, instance):
     """
     Predict a given instance using the decision tree
@@ -234,6 +263,7 @@ def predict(root, instance):
     ###########################################################################
     return pred
 
+
 def calc_accuracy(node, dataset):
     """
     Predict a given dataset using the decision tree and calculate the accuracy
@@ -253,6 +283,7 @@ def calc_accuracy(node, dataset):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return accuracy
+
 
 def depth_pruning(X_train, X_test):
     """
@@ -306,6 +337,7 @@ def chi_pruning(X_train, X_test):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return chi_training_acc, chi_testing_acc, depth
+
 
 def count_nodes(node):
     """
