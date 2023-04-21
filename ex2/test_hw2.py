@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 import  hw2
 from scipy.stats import entropy
+from sklearn.model_selection import train_test_split
 
 @pytest.fixture()
 def raw_data_fixtures():
@@ -11,11 +12,13 @@ def raw_data_fixtures():
     X = np.column_stack([X, y])
     return X
 
+
 @pytest.fixture()
 def splited_data_fixtures(raw_data_fixtures):
-    data = raw_data_fixtures()
+    X = raw_data_fixtures
     X_train, X_test = train_test_split(X, random_state=99)
     return X_train, X_test
+
 
 def test_calc_gini():
     # Test case 1
@@ -51,15 +54,18 @@ def test_calc_entropy():
     assert np.isclose(hw2.calc_entropy(data3), expected_entropy3, atol=1e-3)
 
 
-def test_goodness_of_split():
+def test_goodness_of_split(raw_data_fixtures):
+    X = raw_data_fixtures
     # Test with Gini impurity
     impurity_func = hw2.calc_gini
-    goodness, groups = hw2.goodness_of_split(X_train, 0, impurity_func, gain_ratio=False)
+    goodness, groups = hw2.goodness_of_split(X, 0, impurity_func, gain_ratio=False)
     assert isinstance(goodness, float), "Goodness of split should be a float"
     assert isinstance(groups, dict), "Groups should be a dictionary"
+    assert goodness > 0, "Goodness of split should be positive"
 
     # Test with Gain Ratio
     impurity_func = hw2.calc_entropy
-    goodness, groups = hw2.goodness_of_split(X_train, 1, impurity_func, gain_ratio=True)
+    goodness, groups = hw2.goodness_of_split(X, 1, impurity_func, gain_ratio=True)
     assert isinstance(goodness, float), "Goodness of split should be a float"
     assert isinstance(groups, dict), "Groups should be a dictionary"
+    assert goodness >= 0 and  goodness <= 1, "Gain ratio should be between 0 and 1"

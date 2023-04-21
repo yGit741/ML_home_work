@@ -77,8 +77,7 @@ def calc_gini(data):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    data = pd.DataFrame(data)
-    gini = 1 - ((data.iloc[:,-1].value_counts(normalize=True))**2).sum()
+    gini = 1 - ((pd.DataFrame(data).iloc[:,-1].value_counts(normalize=True))**2).sum()
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -145,7 +144,7 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
         gain = impurity_func(data) - split_info
         goodness = gain / split_info
     else:
-        goodness = sum([-impurity_measure for impurity_measure in impurity_values])
+        goodness = sum([impurity_measure for impurity_measure in impurity_values])
 
     ###########################################################################
     pass
