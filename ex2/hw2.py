@@ -129,22 +129,27 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     # check that the input is consistent with the instructions in the questions
     assert not (impurity_func == calc_gini and gain_ratio), "Can not calculate gain ratio with gini measure"
 
-    # extract the unique values of the desired feature to split into groups
+    # extract the unique values of the desired feature to split into groups (assume np.array)
     feature_values = np.unique(data[:,0])
 
     # splitting the data into smaller data sets based on the feature with dictionary comprehension
-    groups = {feature_char: data[data[:,feature] == feature_char] for feature_char in feature_values }
+    groups = {feature_char: data[data[:,feature] == feature_char] for feature_char in feature_values}
 
     # calculate the desired impurity for each group by the chosen impurity function
     impurity_values = [impurity_func(group) for group in groups.values()]
 
-    # implement the desired goodness_of_split according to gain_ratio boolean
+    # compute the split information gain based on the groups and the impurity measure
+    split_info = np.sum([impurity_val for impurity_val in impurity_values])
+
+    print("split info: ", split_info)
+    print("original info: ", impurity_func(data))
+
+    # compute the goodness of split based on information gain only
+    goodness = split_info - impurity_func(data)
+
+    # replace 'goodness' with gain ratio if flag is set
     if gain_ratio:
-        split_info = np.sum([impurity_func(data_set) for data_set in groups.values()])
-        gain = impurity_func(data) - split_info
-        goodness = gain / split_info
-    else:
-        goodness = sum([impurity_measure for impurity_measure in impurity_values])
+        goodness = goodness / split_info
 
     ###########################################################################
     pass
@@ -180,7 +185,16 @@ class DecisionNode:
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        # checks that there are any rows in the data
+        if self.data.shape[0] > 0:
+
+            # return the labels and their counts
+            unique_labels, counts = np.unique( self.data.iloc[:,-1], return_counts=True)
+
+            # return the label with the highest count
+            pred = unique_labels[np.argmax(counts)]
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -210,8 +224,42 @@ class DecisionNode:
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
-        ###########################################################################
+
+        # Calculate chi-squared value for the split
+
+        # Check if current depth is greater than max_depth
+        if self.depth > self.max_depth:
+            return
+
+        # Check if chi-squared value is .....###########################################################################
+        # TODO: complete this part after implementing chi-squared value calculation
+        ################################################################################################################
+
+        # get the number of features in the dataset
+        num_features = self.data.shape[1] - 1
+        print("num features: ", num_features)
+        # calculate the goodness of split for each feature ([0] is because of the tuple returned by goodness_of_split)
+        gains = [goodness_of_split(self.data, feature, impurity_func, gain_ratio=self.gain_ratio)[0] for feature in
+                 range(num_features)]
+        print("gains: ", gains)
+        # get the best feature according to the calculated gains
+        split_feature = np.argmax(gains)
+        print("split_feature: ", split_feature)
+        # returns all the unique values for the split feature
+        unique_values = np.unique(self.data.iloc[:, split_feature])
+
+        # split the data based on the unique values of the split feature with dictionary comprehension
+        groups = {val: self.data[self.data.iloc[:, split_feature] == val] for val in unique_values}
+
+        # create list of children based on groups and add them to the current node
+        self.children = [DecisionNode(groups[val],
+                                      feature=split_feature.item(),
+                                      depth=self.depth + 1,
+                                      chi=self.chi,
+                                      max_depth=self.max_depth,
+                                      gain_ratio=self.gain_ratio) for val in unique_values]
+
+    ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
 
@@ -356,9 +404,3 @@ def count_nodes(node):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return n_nodes
-
-
-
-
-
-

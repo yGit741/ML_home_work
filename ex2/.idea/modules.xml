@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/PycharmProjects/dsProject/.idea/dsProject.iml" filepath="$USER_HOME$/PycharmProjects/dsProject/.idea/dsProject.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../ex1/.idea/ex1.iml" filepath="$PROJECT_DIR$/../ex1/.idea/ex1.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ex2.iml" filepath="$PROJECT_DIR$/.idea/ex2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../../Data Analysis and Statistics/Excercises/ex4/.idea/ex4.iml" filepath="$PROJECT_DIR$/../../../../Data Analysis and Statistics/Excercises/ex4/.idea/ex4.iml" />
     </modules>
   </component>
 </project>

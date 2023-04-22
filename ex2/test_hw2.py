@@ -69,3 +69,47 @@ def test_goodness_of_split(raw_data_fixtures):
     assert isinstance(goodness, float), "Goodness of split should be a float"
     assert isinstance(groups, dict), "Groups should be a dictionary"
     assert goodness >= 0 and  goodness <= 1, "Gain ratio should be between 0 and 1"
+
+
+def test_calc_node_pred():
+    # Create example data
+    data = pd.DataFrame({'feature1': [1, 2, 3, 4],
+                         'feature2': [5, 6, 7, 8],
+                         'label': ['a', 'b', 'a', 'a']})
+
+    # Create a DecisionNode instance
+    node = hw2.DecisionNode(data)
+
+    # Call calc_node_pred()
+    pred = node.calc_node_pred()
+
+    # Assert the predicted label is the one with the highest count
+    assert pred == 'a', "Incorrect node prediction"
+
+
+def test_split():
+    # Create dummy data for testing
+    data = pd.DataFrame({'feature1': [1, 2, 3, 4, 5],
+                         'feature2': [2, 3, 4, 5, 6],
+                         'target': [0, 0, 1, 1, 1]})
+
+    # Create a DecisionNode object
+    node = hw2.DecisionNode(data, feature=-1, depth=0, chi=1, max_depth=1000, gain_ratio=False)
+
+    # Call the split function
+    node.split(impurity_func='gini')
+
+    # Assert that the number of children nodes created is equal to the number of unique values in the split feature
+    assert len(node.children) == len(np.unique(data.iloc[:, node.feature]))
+
+    # Assert that the depth of the children nodes is incremented by 1
+    assert all(child.depth == node.depth + 1 for child in node.children)
+
+    # # Assert that the chi value of the children nodes is set to the same value as the parent node
+    # assert all(child.chi == node.chi for child in node.children)
+
+    # Assert that the max_depth value of the children nodes is set to the same value as the parent node
+    assert all(child.max_depth == node.max_depth for child in node.children)
+
+    # Assert that the gain_ratio value of the children nodes is set to the same value as the parent node
+    assert all(child.gain_ratio == node.gain_ratio for child in node.children)
