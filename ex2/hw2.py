@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 # The first key is the degree of freedom 
 # The second key is the p-value cut-off
 # The values are the chi-statistic that you need to use in the pruning
-
-
 chi_table = {1: {0.5 : 0.45,
              0.25 : 1.32,
              0.1 : 2.71,
@@ -128,9 +126,6 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     groups = {} # groups[feature_value] = data_subset
     ###########################################################################
 
-    # check that the input is consistent with the instructions in the questions
-    assert not (impurity_func == calc_gini and gain_ratio), "Can not calculate gain ratio with gini measure"
-
     # extract the unique values of the desired feature to split into groups (assume np.array)
     feature_values = np.unique(data[:,feature])
     # print("feature_values: ", feature_values)
@@ -230,7 +225,8 @@ class DecisionNode:
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-
+        print("!!!!!!!!!!!!!")
+        print(self.perfectly_classified())
         # Check if current depth is greater than max_depth
         if self.depth >= self.max_depth or self.perfectly_classified():
             self.terminal = True
@@ -241,9 +237,18 @@ class DecisionNode:
                             *[goodness_of_split(self.data, feature, impurity_func, gain_ratio=self.gain_ratio) for
                               feature in range(self.num_features)]
                             )
+        print(groups)
+
+        # print("---------------------------------------------")
+        # print((gains, groups))
 
         # get the best feature according to the calculated gains
         self.feature = np.argmax(gains)
+
+        # print("self.feature", self.feature)
+        # print("self.data[:,2]", self.data[:,2])
+        # print("np.unique(self.data[:, 2])", np.unique(self.data[:, 2]))
+        # print("group", groups)
 
         # returns all the unique values for the split feature
         self.children_values = np.unique(self.data[:, self.feature])
@@ -306,6 +311,7 @@ class DecisionNode:
         - True if the data in the node is perfectly classified, False otherwise.
         """
         target = self.data[:, -1]
+
         return np.all(target[0] == target)
 
     def calc_chi_stat(self, group):
@@ -388,22 +394,26 @@ def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
     queue = [root]
 
     while len(queue) > 0:
-
+        print("------------------------------")
+        # print("length of Queue", len(queue))
         # pop the last  node in the queue and assign it into node variable
         node = queue.pop()
-
-        # if the depth of the node is greater than the max_depth or the node is perfectly classified,
-        # then the node is a leaf, and we can stop splitting it.
-        if node.depth > root.max_depth or node.perfectly_classified():
-            node.terminal = True
-            continue
 
         # split the node by its best feature according to the chosen impurity measure
         node.split(impurity)
 
-        # add the children of the node to the queue
-        for child in node.children:
-            queue.append(child)
+        # add the children of the node to the queue if there are any
+        if len(node.children) > 0:
+            for child in node.children:
+                if child.data.shape == (2, 22):
+                    print(child.data)
+                    child.split(calc_gini)
+                    print(child.children)
+                    print(child.feature)
+                    assert False
+                #     print(child.data)
+                # print(child.data.shape)
+                queue.append(child)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
