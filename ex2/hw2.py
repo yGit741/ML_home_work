@@ -139,41 +139,48 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     # splitting the data into smaller data sets based on the feature with dictionary comprehension
     groups = {feature_char: data[data[:, feature] == feature_char] for feature_char in feature_values}
 
+    impurity_before_split = impurity_func(data)
 
+    goodness = impurity_before_split - np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
 
     # compute the gain ratio if gain_ratio flag is True
     if gain_ratio:
+        split_info = calc_entropy(np.column_stack([data[:,feature]]))
+        if split_info ==0:
+            goodness = 0
+        else:
+            goodness = goodness / split_info
 
-        # runover the impurity function with emtropy to calculate the gain ratio
-        impurity_func = calc_entropy
-
-        # compute the information split
-        split_info = - np.sum([(group.shape[0] / data.shape[0]) * np.log2((group.shape[0] / data.shape[0]))
-                               for group in groups.values()])
-
-        # calculate the desired impurity for each group by entropy
-        impurity_values = [impurity_func(group) for group in groups.values()]
-
-        # compute the weighted average impurity of the groups
-        impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
-
-
-        info_gain = impurity_func(data) - impurity
-
-        # assign the gain ratio to the goodness variable
-        goodness = info_gain / split_info
+        # # runover the impurity function with emtropy to calculate the gain ratio
+        # impurity_func = calc_entropy
+        #
+        # # compute the information split
+        # split_info = - np.sum([(group.shape[0] / data.shape[0]) * np.log2((group.shape[0] / data.shape[0]))
+        #                        for group in groups.values()])
+        #
+        # # calculate the desired impurity for each group by entropy
+        # impurity_values = [impurity_func(group) for group in groups.values()]
+        #
+        # # compute the weighted average impurity of the groups
+        # impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
+        #
+        #
+        # info_gain = impurity_func(data) - impurity
+        #
+        # # assign the gain ratio to the goodness variable
+        # goodness = info_gain / split_info
 
     # compute the split quality based on the impurity_func argument
-    else:
-
-        # calculate the desired impurity for each group by the chosen impurity function
-        impurity_values = [impurity_func(group) for group in groups.values()]
-
-        # compute the weighted average impurity of the groups
-        impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_values[i] for i, group in enumerate(groups.values())])
-
-        # compute the goodness of split based on information gain and weighted impurity
-        goodness = impurity_func(data) - impurity
+    # else:
+    #
+    #     # calculate the desired impurity for each group by the chosen impurity function
+    #     impurity_values = [impurity_func(group) for group in groups.values()]
+    #
+    #     # compute the weighted average impurity of the groups
+    #     impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_values[i] for i, group in enumerate(groups.values())])
+    #
+    #     # compute the goodness of split based on information gain and weighted impurity
+    #     goodness = impurity_func(data) - impurity
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -265,10 +272,10 @@ class DecisionNode:
                               feature in range(self.num_features)]
                             )
 
-        print(gains)
+        # print(gains)
 
         if all(gain == 0 for gain in gains):
-            print("!!!!")
+            # print("!!!!")
             self.prune()
             return
 
@@ -353,6 +360,12 @@ class DecisionNode:
             E1 = PY_1 * (pf + nf)
             chi_stat += ((pf - E0) ** 2) / E0 + ((nf - E1) ** 2) / E1
         return chi_stat
+
+    def calc_depth(self):
+        if not self.children:
+            return self.depth
+        return max([child.calc_depth() for child in self.children])
+
 
 def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
     """
@@ -541,6 +554,7 @@ def chi_pruning(X_train, X_test):
         current_tree = build_tree(X_train, calc_gini, chi=p_val)
         chi_training_acc.append(calc_accuracy(current_tree, X_train))
         chi_testing_acc.append(calc_accuracy(current_tree, X_test))
+        depth.append(current_tree.calc_depth())
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -594,49 +608,3 @@ def count_nodes_recursively(node):
     # return n_nodes
     return n_nodes
 
-
-def predict_2(root, instance):
-    """
-    Predict a given instance using the decision tree
-
-    Input:
-    - root: the root of the decision tree.
-    - instance: an row vector from the dataset. Note that the last element
-                of this vector is the label of the instance.
-
-    Output: the prediction of the instance.
-    """
-    pred = None
-    ###########################################################################
-    # TODO: Implement the function.                                           #
-    ###########################################################################
-
-    current_node = root
-
-    while not current_node.terminal:
-
-        current_value = instance[current_node.feature]
-
-        children = current_node.children
-
-        values = current_node.children_values
-
-        current_value
-
-        node_feature = current_node.feature
-
-        # current_node.children_values[]
-
-        relevant_child_index = 0
-
-        current_node = children[relevant_child_index]
-
-
-
-
-
-
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
-    return pred
