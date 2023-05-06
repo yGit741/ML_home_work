@@ -139,48 +139,23 @@ def goodness_of_split(data, feature, impurity_func, gain_ratio=False):
     # splitting the data into smaller data sets based on the feature with dictionary comprehension
     groups = {feature_char: data[data[:, feature] == feature_char] for feature_char in feature_values}
 
-    impurity_before_split = impurity_func(data)
+    # compute the impurity of the data according to impurity_func
+    impurity = impurity_func(data)
 
-    goodness = impurity_before_split - np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
+    # calculate the goodness of split
+    goodness = impurity - np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
 
     # compute the gain ratio if gain_ratio flag is True
     if gain_ratio:
+
+        # calculate the split information
         split_info = calc_entropy(np.column_stack([data[:,feature]]))
+
+        # assign o to goodness if split information is 0 to avoid dividing by 0
         if split_info ==0:
             goodness = 0
         else:
             goodness = goodness / split_info
-
-        # # runover the impurity function with emtropy to calculate the gain ratio
-        # impurity_func = calc_entropy
-        #
-        # # compute the information split
-        # split_info = - np.sum([(group.shape[0] / data.shape[0]) * np.log2((group.shape[0] / data.shape[0]))
-        #                        for group in groups.values()])
-        #
-        # # calculate the desired impurity for each group by entropy
-        # impurity_values = [impurity_func(group) for group in groups.values()]
-        #
-        # # compute the weighted average impurity of the groups
-        # impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_func(group) for group in groups.values()])
-        #
-        #
-        # info_gain = impurity_func(data) - impurity
-        #
-        # # assign the gain ratio to the goodness variable
-        # goodness = info_gain / split_info
-
-    # compute the split quality based on the impurity_func argument
-    # else:
-    #
-    #     # calculate the desired impurity for each group by the chosen impurity function
-    #     impurity_values = [impurity_func(group) for group in groups.values()]
-    #
-    #     # compute the weighted average impurity of the groups
-    #     impurity = np.sum([(group.shape[0] / data.shape[0]) * impurity_values[i] for i, group in enumerate(groups.values())])
-    #
-    #     # compute the goodness of split based on information gain and weighted impurity
-    #     goodness = impurity_func(data) - impurity
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -257,14 +232,9 @@ class DecisionNode:
         # TODO: Implement the function.                                           #
         ###########################################################################
         # Check if current depth is greater than max_depth
-        if self.depth >= self.max_depth or impurity_func(self.data) == 0:
+        if self.depth >= self.max_depth:
             self.prune()
             return
-
-        # if self.perfectly_classified():
-        #     self.prune()
-        #     return
-
 
         # calculate the goodness of split and groups and unpack them into separate variables
         gains, groups = zip(
@@ -272,12 +242,14 @@ class DecisionNode:
                               feature in range(self.num_features)]
                             )
 
-        # print(gains)
-
-        if all(gain == 0 for gain in gains):
-            # print("!!!!")
+        # check if the best goodness of split is zero, and if so initiate a leaf
+        if max(gains) == 0:
             self.prune()
             return
+
+        # if all(gain == 0 for gain in gains):
+        #     self.prune()
+        #     return
 
 
         # get the best feature according to the calculated gains
@@ -392,7 +364,6 @@ def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
     # enqueue the root
     queue = [root]
 
-    total_iters = 0
     while len(queue) > 0:
 
         # pop the last  node in the queue and assign it into node variable
@@ -404,9 +375,6 @@ def build_tree(data, impurity, gain_ratio=False, chi=1, max_depth=1000):
         # add the children of the current node to the queue
         for child in node.children:
             queue.append(child)
-
-        total_iters += 1
-
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -434,14 +402,9 @@ def predict(root, instance):
 
     # loop down the tree until we get to a leaf
     while not current_node.terminal:
-        # print("current_node.feture ", current_node.feature)
-        # print("is leaf", current_node.terminal)
 
         # value of the feature of current_node at the given instance
         instance_value_at_current_feature = instance[current_node.feature]
-
-        # print("current_node.children_values", current_node.children_values)
-        # print(np.unique(root.data[:,current_node.feature]))
 
         if instance_value_at_current_feature in current_node.children_values:
             # find the index of the children that his value is instance_value_at_current_feature
