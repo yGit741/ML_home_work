@@ -589,7 +589,7 @@ class DiscreteNBClassDistribution():
     def __init__(self, dataset, class_value):
         """
         A class which computes and encapsulate the relevant probabilites for a discrete naive bayes 
-        distribution for a specific class. The probabilites are computed with laplace smoothing.
+        distribution for a specific class. The probabilities are computed with laplace smoothing.
         
         Input
         - dataset: The dataset as a numpy array.
@@ -598,21 +598,24 @@ class DiscreteNBClassDistribution():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+        self.full_dataset = dataset
+        self.data = dataset[dataset[:, -1] == class_value]
+        self.mu = np.mean(self.data[:, :-1], axis=0)
+        self.sigma = np.std(self.data[:, :-1], axis=0)
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
     
     def get_prior(self):
         """
-        Returns the prior porbability of the class 
+        Returns the prior probability of the class
         according to the dataset distribution.
         """
         prior = None
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+        prior = self.data.shape[0] / self.full_dataset.shape[0]
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -627,7 +630,18 @@ class DiscreteNBClassDistribution():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        # initialize the likelihood to be 1
+        likelihood = 1
+
+        for i, feature_value in enumerate(x):
+            # compute the probability for each feature with the Laplace smoothing
+            feature_prob = (np.sum(self.data[:, i] == feature_value) + 1) / (
+                        self.data.shape[0] + len(np.unique(self.data[:, i])))
+
+            # given conditional independence we can multiply feature probabilities to find the likelihood
+            likelihood *= feature_prob
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -635,7 +649,7 @@ class DiscreteNBClassDistribution():
         
     def get_instance_posterior(self, x):
         """
-        Returns the posterior porbability of the instance 
+        Returns the posterior probability of the instance
         under the class according to the dataset distribution.
         * Ignoring p(x)
         """
@@ -643,7 +657,9 @@ class DiscreteNBClassDistribution():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        posterior = self.get_prior() * self.get_instance_likelihood(x)
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -663,7 +679,11 @@ class MAPClassifier_DNB():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        self.ccd0 = ccd0
+
+        self.ccd1 = ccd1
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -681,7 +701,12 @@ class MAPClassifier_DNB():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        if self.ccd0.get_instance_posterior(x) > self.ccd1.get_instance_posterior(x):
+            pred = 0
+        else:
+            pred = 1
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -700,7 +725,13 @@ class MAPClassifier_DNB():
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        num_correct = sum(instance[-1] == self.predict(instance[:-1]) for instance in test_set)
+
+        total_instances = test_set.shape[0]
+
+        acc = num_correct / total_instances
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
