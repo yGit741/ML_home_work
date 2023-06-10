@@ -30,6 +30,19 @@ class LogisticRegressionGD(object):
         self.Js = []
         self.thetas = []
 
+    def _sigmoid(self, theta, x):
+        """
+        Private method that compute the sigmoid function for logistic regression.
+
+        Parameters:
+        theta (numpy.ndarray): The weight vector.
+        x (numpy.ndarray): The input vector.
+
+        Returns:
+        float: The sigmoid value.
+        """
+        return 1 / (1 + np.exp(theta.dot(x)))
+
     def fit(self, X, y):
         """
         Fit training data (the learning phase).
@@ -55,7 +68,28 @@ class LogisticRegressionGD(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+
+        for _ in range(self.n_iter):
+
+            # compute the output of the sigmoid function
+            h = self._sigmoid(self.theta, X.T)
+
+            # update theta using gradient descent
+            gradient = np.dot(X.T, (h - y))
+            self.theta -= self.eta * gradient
+
+            # store theta for each iteration
+            self.thetas.append(self.theta.copy())
+
+            # compute cost function and append to Js history
+            J = (-1 / len(y)) * np.sum(y * np.log(h) + (1 - y) * np.log(1 - h))
+            self.Js.append(J)
+
+            # check convergence according to self.eps
+            if len(self.Js) > 1 and abs(self.Js[-1] - self.Js[-2]) < self.eps:
+                break
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -71,7 +105,9 @@ class LogisticRegressionGD(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
