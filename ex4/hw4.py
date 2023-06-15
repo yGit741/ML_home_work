@@ -1,5 +1,20 @@
 import numpy as np
 
+def sigmoid(x):
+    """
+    Compute the sigmoid function for a given input x.
+
+    The sigmoid function, also known as the logistic function, is a non-linear
+    activation function that maps any real-valued number to a value between 0 and 1.
+
+    Parameters:
+    x (numpy.ndarray or float): The input value or array.
+
+    Returns:
+    numpy.ndarray or float: The sigmoid value(s) corresponding to the input.
+    """
+    return 1 / (1 + np.exp(-x))
+
 class LogisticRegressionGD(object):
     """
     Logistic Regression Classifier using gradient descent.
@@ -30,19 +45,6 @@ class LogisticRegressionGD(object):
         self.Js = []
         self.thetas = []
 
-    def _sigmoid(self, theta, x):
-        """
-        Private method that compute the sigmoid function for logistic regression.
-
-        Parameters:
-        theta (numpy.ndarray): The weight vector.
-        x (numpy.ndarray): The input vector.
-
-        Returns:
-        float: The sigmoid value.
-        """
-        return 1 / (1 + np.exp(theta.dot(x)))
-
     def fit(self, X, y):
         """
         Fit training data (the learning phase).
@@ -69,15 +71,16 @@ class LogisticRegressionGD(object):
         # TODO: Implement the function.                                           #
         ###########################################################################
 
+        self.theta = np.zeros((X.shape[1]) + 1)
 
-        for _ in range(self.n_iter):
+        X = np.column_stack((np.ones(X.shape[0]), X))
 
-            # compute the output of the sigmoid function
-            h = self._sigmoid(self.theta, X.T)
+        for i in range(self.n_iter):
 
             # update theta using gradient descent
-            gradient = np.dot(X.T, (h - y))
-            self.theta -= self.eta * gradient
+            h = sigmoid(np.dot(X, self.theta))
+            gradient = np.dot(X.T, (h - y)).reshape(-1,1)
+            self.theta[:,np.newaxis] -= self.eta * gradient
 
             # store theta for each iteration
             self.thetas.append(self.theta.copy())
@@ -101,12 +104,20 @@ class LogisticRegressionGD(object):
         ----------
         X : {array-like}, shape = [n_examples, n_features]
         """
+
         preds = None
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
 
+        # Perform prediction for each instance in X using the learned model parameters
+        # if the sigmoid output is greater than 0.5, assign the class label 1, else assign 0
+        # store the predicted class labels in the 'preds' list
 
+        # apply bias trick
+        X = np.column_stack((np.ones(X.shape[0]), X))
+
+        preds = [1 if sigmoid(np.dot(self.theta, x)) > 0.5 else 0 for x in X]
 
         ###########################################################################
         #                             END OF YOUR CODE                            #
@@ -145,7 +156,31 @@ def cross_validation(X, y, folds, algo, random_state):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+
+    all_indices = np.random.permutation(X.shape[0])
+    shuffled_X = X[all_indices]
+    shuffled_y = y[all_indices]
+
+    folds_indices = np.array_split(all_indices, folds)
+
+    accuracies = []
+
+    for indices in folds_indices:
+
+        test_indices = np.isin(np.arange(shuffled_X.shape[0]), indices)
+        train_indices = ~ test_indices
+
+        x_train = shuffled_X[train_indices]
+        y_train = shuffled_y[train_indices]
+        x_test = shuffled_X[test_indices]
+        y_test = shuffled_y[test_indices]
+
+        algo.fit(x_train,y_train)
+
+        accuracies.append(np.mean(algo.predict(x_test) == y_test))
+
+    cv_accuracy = np.mean(accuracies)
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -167,7 +202,7 @@ def norm_pdf(data, mu, sigma):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+    p = (1 / (sigma * (2*np.pi) ** 0.5))*np.exp(-0.5*((data-mu)/sigma)**2)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -198,10 +233,10 @@ class EM(object):
         np.random.seed(self.random_state)
 
         self.responsibilities = None
-        self.weights = None
-        self.mus = None
-        self.sigmas = None
-        self.costs = None
+        self.weights = np.array([])
+        self.mus = np.array([])
+        self.sigmas = np.array([])
+        self.costs = np.array([])
 
     # initial guesses for parameters
     def init_params(self, data):
@@ -211,10 +246,16 @@ class EM(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+        self.weights = np.ones(self.k) / self.k
+        self.mus = np.random.rand(self.k, data.shape[1])
+        self.sigmas = np.ones((self.k, data.shape[1]))
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
+
+    def compute_cost(self, data, weights, mus, sigmas):
+        m = data.shape[0]
+        return np.sum([-np.log(np.sum(weights * norm_pdf(x, mus, sigmas))) for x in data])
 
     def expectation(self, data):
         """
@@ -223,7 +264,22 @@ class EM(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+        m = data.shape[0]
+        n = data.shape[1]
+        self.responsibilities = np.zeros((m,n))
+
+        denominator = np.sum(np.multiply(self.weights[i],norm_pdf(data, self.mus[i], self.sigmas[i])) for i in range(self.k))
+        print("denominator: ", denominator)
+
+        for i in range(self.k):
+            numerator = self.weights * norm_pdf(data[i], self.mus, self.sigmas)
+            denominator = np.sum(numerator)
+            print(numerator.shape)
+            print(denominator.shape)
+            print(numerator)
+
+            self.responsibilities[i] = numerator / denominator
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -235,7 +291,22 @@ class EM(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+        N = data.shape[0]
+        self.weights = 1
+        self.mus = 1
+        self.sigmas = 1
+
+        self.weights = np.sum(self.responsibilities, axis=0) / N
+
+        weighted_sum = np.dot(self.responsibilities.T, data)
+        self.mus = weighted_sum / np.sum(self.responsibilities, axis=0, keepdims=True)
+
+        squared_diff = (data - self.mus[:, np.newaxis]) ** 2
+        self.sigmas = np.sqrt(
+            np.sum(self.responsibilities[:, :, np.newaxis] * squared_diff, axis=0) / np.sum(self.responsibilities,
+                                                                                            axis=0, keepdims=True))
+
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -252,7 +323,19 @@ class EM(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        self.init_params(data)
+        cost_prev = 0
+
+        for _ in range(self.n_iter):
+            self.expectation(data)
+            self.maximization(data)
+            cost = self.compute_cost(data, self.weights, self.mus, self.sigmas)
+            np.append(self.costs, cost)
+            if abs(cost_prev - cost) < self.eps:
+                break
+
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -278,7 +361,7 @@ def gmm_pdf(data, weights, mus, sigmas):
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+    pdf = np.sum([weight * norm_pdf(data, mu, sigma) for weight, mu, sigma in zip(weights, mus, sigmas)])
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -300,6 +383,7 @@ class NaiveBayesGaussian(object):
         self.k = k
         self.random_state = random_state
         self.prior = None
+        self.em = EM(k=k, random_state=random_state)
 
     def fit(self, X, y):
         """
@@ -316,7 +400,13 @@ class NaiveBayesGaussian(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        self.prior = np.zeros(2)
+        self.em.fit(np.hstack(X, y))
+
+        self.prior[0] = np.sum(y == 0) / len(y)
+        self.prior[1] = np.sum(y == 1) / len(y)
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
@@ -332,7 +422,19 @@ class NaiveBayesGaussian(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        pass
+
+        preds = []
+        weights, mus, sigmas = self.em.get_dist_params()
+
+        for x in X:
+            likelihoods = []
+            for c in range(2):
+                class_likelihood = 0.0
+                for i in range(self.k):
+                    class_likelihood += weights[i, c] * norm_pdf(x, mus[i, c], sigmas[i, c])
+                likelihoods.append(class_likelihood)
+
+            preds.append(np.argmax(likelihoods))
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
