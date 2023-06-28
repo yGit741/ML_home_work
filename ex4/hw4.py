@@ -232,7 +232,7 @@ class EM(object):
 
         np.random.seed(self.random_state)
 
-        self.responsibilities = None
+        self.responsibilities = np.array([])
         self.weights = np.array([])
         self.mus = np.array([])
         self.sigmas = np.array([])
@@ -249,13 +249,15 @@ class EM(object):
         self.weights = np.ones(self.k) / self.k
         self.mus = np.random.rand(self.k, data.shape[1])
         self.sigmas = np.ones((self.k, data.shape[1]))
+        self.responsibilities = np.zeros((data.shape[0], self.k))
+
         ###########################################################################
         #                             END OF YOUR CODE                            #
         ###########################################################################
 
     def compute_cost(self, data, weights, mus, sigmas):
-        m = data.shape[0]
         return np.sum([-np.log(np.sum(weights * norm_pdf(x, mus, sigmas))) for x in data])
+
 
     def expectation(self, data):
         """
@@ -264,21 +266,13 @@ class EM(object):
         ###########################################################################
         # TODO: Implement the function.                                           #
         ###########################################################################
-        m = data.shape[0]
-        n = data.shape[1]
-        self.responsibilities = np.zeros((m,n))
 
-        denominator = np.sum(np.multiply(self.weights[i],norm_pdf(data, self.mus[i], self.sigmas[i])) for i in range(self.k))
-        print("denominator: ", denominator)
 
         for i in range(self.k):
-            numerator = self.weights * norm_pdf(data[i], self.mus, self.sigmas)
-            denominator = np.sum(numerator)
-            print(numerator.shape)
-            print(denominator.shape)
-            print(numerator)
-
-            self.responsibilities[i] = numerator / denominator
+            numer = self.weights[i] * norm_pdf(data, self.mus[i], self.sigmas[i]).reshape((-1,))
+            denom = np.sum([self.weights * norm_pdf(data, self.mus[j], self.sigmas[j]) for j in range(self.k)])
+            # numer = np.reshape(numer, (-1,))
+            self.responsibilities[:,i] = numer / denom
 
         ###########################################################################
         #                             END OF YOUR CODE                            #
@@ -292,20 +286,17 @@ class EM(object):
         # TODO: Implement the function.                                           #
         ###########################################################################
         N = data.shape[0]
-        self.weights = 1
-        self.mus = 1
-        self.sigmas = 1
 
-        self.weights = np.sum(self.responsibilities, axis=0) / N
-
-        weighted_sum = np.dot(self.responsibilities.T, data)
-        self.mus = weighted_sum / np.sum(self.responsibilities, axis=0, keepdims=True)
-
-        squared_diff = (data - self.mus[:, np.newaxis]) ** 2
-        self.sigmas = np.sqrt(
-            np.sum(self.responsibilities[:, :, np.newaxis] * squared_diff, axis=0) / np.sum(self.responsibilities,
-                                                                                            axis=0, keepdims=True))
-
+        for j in range(self.k):
+            self.weights[j] = np.sum(self.responsibilities[:, j]) / N
+            self.mus[j] = np.sum(self.responsibilities[:, j][:, np.newaxis] * data, axis=0) / np.sum(
+                self.responsibilities[:, j])
+            self.sigmas[j] = np.sqrt(
+                np.sum(
+                    self.responsibilities[:, j][:, np.newaxis] * (data - self.mus[j]) ** 2,
+                    axis=0
+                ) / np.sum(self.responsibilities[:, j])
+            )
 
         ###########################################################################
         #                             END OF YOUR CODE                            #
@@ -332,8 +323,15 @@ class EM(object):
             self.maximization(data)
             cost = self.compute_cost(data, self.weights, self.mus, self.sigmas)
             np.append(self.costs, cost)
+            print(cost)
             if abs(cost_prev - cost) < self.eps:
                 break
+            print(f"mus = {self.mus}")
+            print(f"sigmas = {self.sigmas}")
+            print(f"weights = {self.weights}")
+            print("-----------------------")
+
+
 
 
         ###########################################################################
