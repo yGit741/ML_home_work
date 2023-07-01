@@ -185,9 +185,6 @@ def get_distributed_centroids(X, k, p=2):
 
     return centroids
 
-def inertia(X, centroids, p):
-    square_d = (lp_distance(X, centroids, p))**2
-    print(square_d)
-    minimal_d = np.min(square_d, axis=0)
-    print(minimal_d)
-    return np.sum(minimal_d)
+def inertia(X, centroids, p=2):
+    return np.sum(np.min(lp_distance(X, centroids, p=p), axis = 1)**2)
+
